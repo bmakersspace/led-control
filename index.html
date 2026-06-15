@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LED Control</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: #1a1a2e;
+        color: white;
+        margin: 0;
+      }
+      h1 {
+        margin-bottom: 40px;
+      }
+      .btn {
+        padding: 20px 50px;
+        font-size: 1.4rem;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        margin: 10px;
+        transition: transform 0.1s;
+      }
+      .btn:active {
+        transform: scale(0.95);
+      }
+      #onBtn {
+        background: #00d4aa;
+        color: #000;
+      }
+      #offBtn {
+        background: #e94560;
+        color: #fff;
+      }
+      #sendBtn {
+        background: #7b61ff;
+        color: #fff;
+      }
+      #status {
+        margin-top: 30px;
+        font-size: 0.9rem;
+        opacity: 0.6;
+      }
+      .section {
+        margin: 20px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      h2 {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      textarea {
+        width: 320px;
+        height: 80px;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 1rem;
+        background: #2a2a4a;
+        color: white;
+        border: 1px solid #444;
+        resize: none;
+      }
+      textarea:focus {
+        outline: none;
+        border-color: #7b61ff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎛️ Braxton's ESP32</h1>
+
+    <div class="section">
+      <h2>💡 LED</h2>
+      <div>
+        <button class="btn" id="onBtn" onclick="sendLED('ON')">Turn ON</button>
+        <button class="btn" id="offBtn" onclick="sendLED('OFF')">
+          Turn OFF
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>💬 OLED Message</h2>
+      <textarea
+        id="msgInput"
+        placeholder="Type a message..."
+        maxlength="120"
+      ></textarea>
+      <button class="btn" id="sendBtn" onclick="sendMessage()">
+        Send to Display
+      </button>
+    </div>
+
+    <p id="status">Connecting...</p>
+
+    <script>
+      const led_topic = "braxton/led/control";
+      const msg_topic = "braxton/oled/message";
+
+      const client = mqtt.connect("wss://broker.hivemq.com:8884/mqtt");
+
+      client.on("connect", () => {
+        document.getElementById("status").textContent =
+          "✅ Connected to broker";
+      });
+      client.on("error", () => {
+        document.getElementById("status").textContent = "❌ Connection error";
+      });
+
+      function sendLED(command) {
+        client.publish(led_topic, command);
+        document.getElementById("status").textContent =
+          `Sent LED: ${command} @ ${new Date().toLocaleTimeString()}`;
+      }
+
+      function sendMessage() {
+        const msg = document.getElementById("msgInput").value.trim();
+        if (!msg) return;
+        client.publish(msg_topic, msg);
+        document.getElementById("status").textContent =
+          `Sent message @ ${new Date().toLocaleTimeString()}`;
+      }
+    </script>
+  </body>
+</html>
